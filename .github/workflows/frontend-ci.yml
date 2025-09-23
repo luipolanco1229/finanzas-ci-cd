@@ -6,11 +6,13 @@ on:
       - main
     paths:
       - 'frontend/finanzas-frontend/**'
+      - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'frontend/finanzas-frontend/**'
+      - '.github/workflows/frontend-ci.yml'
 
 jobs:
   build-test-deploy:
@@ -74,7 +76,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./frontend/finanzas-frontend
           file: ./frontend/finanzas-frontend/Dockerfile
           push: true
           tags: |
