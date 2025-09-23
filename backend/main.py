@@ -54,8 +54,7 @@ def resumen():
     balance = ingresos - gastos
 
     # KPIs por categoría (opcional para la UI)
-    por_categoria = {}    
-    
+    por_categoria = {}        
     for m in _movimientos:
         cat = m.get("categoria") or "Sin categoría"
         por_categoria.setdefault(cat, 0.0)
