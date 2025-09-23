@@ -57,6 +57,7 @@ body{margin:0; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Ro
   grid-template-columns: 1fr 360px; /* main + right rail */
   gap:18px; padding:0 24px 24px 24px;
 }
+
 .card{
   background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px;
 }
