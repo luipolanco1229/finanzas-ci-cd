@@ -1,7 +1,7 @@
 import { test, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import StatCard from '../../src/components/StatCard';
+import StatCard from '../../../src/components/StatCard';
 
 test('muestra título y cantidad', () => {
   render(<StatCard title="Total Balance" amount="$123" />);

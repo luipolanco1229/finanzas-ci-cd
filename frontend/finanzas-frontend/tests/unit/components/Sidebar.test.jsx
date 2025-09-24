@@ -1,7 +1,7 @@
 // tests/components/Sidebar.test.jsx
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Sidebar from '../../src/components/Sidebar';
+import Sidebar from '../../../src/components/Sidebar';
 
 describe('Sidebar', () => {
   test('renderiza marca y enlaces', () => {

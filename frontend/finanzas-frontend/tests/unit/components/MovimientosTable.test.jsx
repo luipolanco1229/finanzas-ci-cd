@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from 'vitest';
 import { render, screen, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import MovimientosTable from '../../src/components/MovimientosTable';
+import MovimientosTable from '../../../src/components/MovimientosTable';
 
 describe('MovimientosTable', () => {
   test('renderiza cabecera y filas según movimientos', () => {

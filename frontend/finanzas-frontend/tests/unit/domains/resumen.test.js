@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'vitest';
-import { formatResumen } from '../../src/domain/resumen';
+import { formatResumen } from '../../../src/domain/resumen';
 
 describe('formatResumen', () => {
   test('devuelve ceros cuando raw es null', () => {

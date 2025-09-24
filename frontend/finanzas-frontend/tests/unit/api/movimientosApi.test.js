@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as http from '../../src/api/httpClient';
-import { movimientosApi } from '../../src/api/movimientosApi';
+import * as http from '../../../src/api/httpClient';
+import { movimientosApi } from '../../../src/api/movimientosApi';
 
 describe('movimientosApi', () => {
   beforeEach(() => vi.restoreAllMocks());

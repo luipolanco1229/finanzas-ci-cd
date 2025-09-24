@@ -1,7 +1,7 @@
 import { test, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import MovimientoForm from '../../src/components/MovimientoForm';
+import MovimientoForm from '../../../src/components/MovimientoForm';
 
 const type = (el, value) => fireEvent.change(el, { target: { value } });
 

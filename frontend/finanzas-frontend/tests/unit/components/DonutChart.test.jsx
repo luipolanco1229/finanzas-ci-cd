@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import DonutChart from '../../src/components/DonutChart';
+import DonutChart from '../../../src/components/DonutChart';
 
 beforeAll(() => {
   global.ResizeObserver = class {

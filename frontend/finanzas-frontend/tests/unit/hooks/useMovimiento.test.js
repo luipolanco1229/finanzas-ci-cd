@@ -4,7 +4,7 @@ import { useMovimientos } from '../../../src/hooks/useMovimientos';
 import { movimientosApi } from '../../../src/api/movimientosApi';
 
 // Mock API
-vi.mock('../../src/api/movimientosApi', () => ({
+vi.mock('../../../src/api/movimientosApi', () => ({
   movimientosApi: {
     listar: vi.fn(),
     resumen: vi.fn(),
