@@ -128,7 +128,12 @@
 <a name='L63'></a><a href='#L63'>63</a>
 <a name='L64'></a><a href='#L64'>64</a>
 <a name='L65'></a><a href='#L65'>65</a>
-<a name='L66'></a><a href='#L66'>66</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -193,22 +198,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import Sidebar from "../components/Sidebar";
-import Header from "../components/Header";
-import StatCard from "../components/StatCard";
-import DonutChart from "../components/DonutChart";
-import MovimientoForm from "../components/MovimientoForm";
-import MovimientosTable from "../components/MovimientosTable";
-import { useMovimientos } from "../hooks/useMovimientos";
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// src/app/App.jsx
+import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
+import DonutChart from '../components/DonutChart';
+import MovimientoForm from '../components/MovimientoForm';
+import MovimientosTable from '../components/MovimientosTable';
+import { useMovimientos } from '../hooks/useMovimientos';
 &nbsp;
-export default function <span class="fstat-no" title="function not covered" >App(){</span>
+export default function <span class="fstat-no" title="function not covered" >App() {</span>
   const { movimientos, kpis, loading, error, crear, eliminar } = <span class="cstat-no" title="statement not covered" >useMovimientos();</span>
 &nbsp;
   const donutData = <span class="cstat-no" title="statement not covered" >[</span>
-    { name: "VTI", value: 40 },
-    { name: "ICLN", value: 25 },
-    { name: "ICLN", value: 15 },
-    { name: "BTEK", value: 20 },
+    { name: 'VTI', value: 40 },
+    { name: 'ICLN', value: 25 },
+    { name: 'ICLN', value: 15 },
+    { name: 'BTEK', value: 20 },
   ];
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
@@ -219,16 +229,21 @@ export default function <span class="fstat-no" title="function not covered" >App
       {/* Content */}
       &lt;div className="content"&gt;
         {/* Main column */}
-        &lt;div style={{display:"grid", gap:12}}&gt;
+        &lt;div style={{ display: 'grid', gap: 12 }}&gt;
           &lt;div className="card"&gt;
-            &lt;div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}&gt;
-              &lt;div style={{fontWeight:800}}&gt;Recent Transactions&lt;/div&gt;
-              &lt;a href="#" style={{fontSize:12, color:"#0ea5e9", textDecoration:"none"}}&gt;See all&lt;/a&gt;
+            &lt;div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}&gt;
+              &lt;div style={{ fontWeight: 800 }}&gt;Recent Transactions&lt;/div&gt;
+&nbsp;
+              {/* antes: &lt;a href="#"&gt;See all&lt;/a&gt;  */}
+              &lt;button type="button" className="link-like" aria-label="Ver todas las transacciones"&gt;
+                See all
+              &lt;/button&gt;
             &lt;/div&gt;
-            &lt;MovimientoForm onSubmit={crear} disabled={loading}/&gt;
-            {error &amp;&amp; &lt;div style={{ marginTop: 8, color: "#b91c1c" }}&gt;{error}&lt;/div&gt;}
-            &lt;div style={{marginTop:16}}&gt;
-              &lt;MovimientosTable movimientos={movimientos} onDelete={eliminar} disabled={loading}/&gt;
+&nbsp;
+            &lt;MovimientoForm onSubmit={crear} disabled={loading} /&gt;
+            {error &amp;&amp; &lt;div style={{ marginTop: 8, color: '#b91c1c' }}&gt;{error}&lt;/div&gt;}
+            &lt;div style={{ marginTop: 16 }}&gt;
+              &lt;MovimientosTable movimientos={movimientos} onDelete={eliminar} disabled={loading} /&gt;
             &lt;/div&gt;
           &lt;/div&gt;
         &lt;/div&gt;
@@ -238,7 +253,7 @@ export default function <span class="fstat-no" title="function not covered" >App
           &lt;div className="kpis"&gt;
             &lt;div className="card kpi"&gt;
               &lt;div className="label"&gt;Total Balance&lt;/div&gt;
-              &lt;div className="value"&gt;{kpis[2]?.value }&lt;/div&gt;
+              &lt;div className="value"&gt;{kpis[2]?.value}&lt;/div&gt;
               &lt;div className="trend-up"&gt;+4%&lt;/div&gt;
             &lt;/div&gt;
             &lt;div className="card kpi"&gt;
@@ -265,7 +280,7 @@ export default function <span class="fstat-no" title="function not covered" >App
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-24T02:33:30.561Z
+                at 2025-09-24T02:43:41.368Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
