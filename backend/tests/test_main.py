@@ -23,7 +23,7 @@ def reset_state():
 
 def test_salud_ok():
     reset_state()
-    r = client.get("/salud")
+    r = client.get("/health")
     assert r.status_code == 200
     assert r.json() == {"status": "ok"}
 

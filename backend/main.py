@@ -8,7 +8,7 @@ app = FastAPI(title="API Finanzas", version="1.0.0")
 # CORS: habilita peticiones desde Vite (puerto 5173 por defecto)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,7 +27,7 @@ _movimientos: List[dict] = [
     {"tipo": "gasto", "monto": 230.0, "descripcion": "Mercado", "categoria": "Hogar"},
 ]
 
-@app.get("/salud")
+@app.get("/health")
 def salud():
     return {"status": "ok"}
 
