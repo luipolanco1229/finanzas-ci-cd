@@ -1,33 +1,37 @@
-import { test, expect, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { describe, test, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import MovimientosTable from '../../src/components/MovimientosTable';
+import StatCard from '../../src/components/MovimientosTable';
 
-test('muestra filas según movimientos y permite eliminar', () => {
-  const movs = [
-    { tipo: 'ingreso', monto: 100, descripcion: 'Salario', categoria: 'Trabajo' },
-    { tipo: 'gasto', monto: 50, descripcion: 'Transporte', categoria: 'Movilidad' },
-  ];
-  const onDelete = vi.fn();
+describe('StatCard', () => {
+  test('renderiza el título y el monto', () => {
+    render(<StatCard title="Ingresos" amount={500} />);
+    expect(screen.getByText('Ingresos')).toBeInTheDocument();
+    expect(screen.getByText('500')).toBeInTheDocument();
+  });
 
-  render(<MovimientosTable movimientos={movs} onDelete={onDelete} />);
+  test('muestra el trend positivo con clase trend-up', () => {
+    render(<StatCard title="Ingresos" amount={500} trend="+10%" />);
+    const trend = screen.getByText('+10%');
+    expect(trend).toBeInTheDocument();
+    expect(trend).toHaveClass('trend-up');
+  });
 
-  const rows = screen.getAllByRole('row');
-  expect(rows).toHaveLength(3);
+  test('muestra el trend negativo con clase trend-down', () => {
+    render(<StatCard title="Gastos" amount={200} trend="-5%" />);
+    const trend = screen.getByText('-5%');
+    expect(trend).toBeInTheDocument();
+    expect(trend).toHaveClass('trend-down');
+  });
 
-  const secondRow = rows[2];
-  expect(within(secondRow).getByText('gasto')).toBeInTheDocument();
-  expect(within(secondRow).getByText('50')).toBeInTheDocument();
+  test('no muestra trend si no se pasa prop trend', () => {
+    render(<StatCard title="Saldo" amount={1000} />);
+    expect(screen.queryByText(/\d+%/)).not.toBeInTheDocument();
+  });
 
-  const delBtn = within(secondRow).getByRole('button', { name: /Eliminar/i });
-  fireEvent.click(delBtn);
-  expect(onDelete).toHaveBeenCalledWith(1);
-});
-
-test('muestra el mensaje de vacío cuando no hay movimientos', () => {
-  render(<MovimientosTable movimientos={[]} onDelete={() => {}} />);
-
-  expect(
-    screen.getByText(/Sin movimientos todavía/i)
-  ).toBeInTheDocument();
+  test('aplica el estilo marginTop al trend', () => {
+    render(<StatCard title="Ingresos" amount={500} trend="+10%" />);
+    const trend = screen.getByText('+10%');
+    expect(trend).toHaveStyle({ marginTop: '6px' });
+  });
 });

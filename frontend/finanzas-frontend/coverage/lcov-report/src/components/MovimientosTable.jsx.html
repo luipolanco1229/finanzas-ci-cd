@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">57.14% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>4/7</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
@@ -79,32 +79,9 @@
 <a name='L14'></a><a href='#L14'>14</a>
 <a name='L15'></a><a href='#L15'>15</a>
 <a name='L16'></a><a href='#L16'>16</a>
-<a name='L17'></a><a href='#L17'>17</a>
-<a name='L18'></a><a href='#L18'>18</a>
-<a name='L19'></a><a href='#L19'>19</a>
-<a name='L20'></a><a href='#L20'>20</a>
-<a name='L21'></a><a href='#L21'>21</a>
-<a name='L22'></a><a href='#L22'>22</a>
-<a name='L23'></a><a href='#L23'>23</a>
-<a name='L24'></a><a href='#L24'>24</a>
-<a name='L25'></a><a href='#L25'>25</a>
-<a name='L26'></a><a href='#L26'>26</a>
-<a name='L27'></a><a href='#L27'>27</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<a name='L17'></a><a href='#L17'>17</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -115,29 +92,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">export default function MovimientosTable({ movimientos = <span class="branch-0 cbranch-no" title="branch not covered" >[], o</span>nDelete, disabled }) {
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">export default function StatCard({title, amount, trend}){
+  const positive = trend?.startsWith("+");
   return (
-    &lt;div style={{ overflowX: "auto" }}&gt;
-      &lt;table className="table"&gt;
-        &lt;thead&gt;
-          &lt;tr&gt;{["#", "Tipo", "Monto", "Descripción", "Categoría", ""].map((h) =&gt; &lt;th key={h}&gt;{h}&lt;/th&gt;)}&lt;/tr&gt;
-        &lt;/thead&gt;
-        &lt;tbody&gt;
-          {movimientos.map((m, i) =&gt; (
-            &lt;tr key={i}&gt;
-              &lt;td&gt;{i}&lt;/td&gt;
-              &lt;td&gt;{m.tipo}&lt;/td&gt;
-              &lt;td&gt;{m.monto}&lt;/td&gt;
-              &lt;td&gt;{m.descripcion ?? <span class="branch-1 cbranch-no" title="branch not covered" >"—"}&lt;</span>/td&gt;
-              &lt;td&gt;{m.categoria ?? <span class="branch-1 cbranch-no" title="branch not covered" >"—"}&lt;</span>/td&gt;
-              &lt;td&gt;&lt;button onClick={() =&gt; onDelete(i)} className="btn btn-danger" disabled={disabled}&gt;Eliminar&lt;/button&gt;&lt;/td&gt;
-            &lt;/tr&gt;
-          ))}
-          {movimientos.length === 0 &amp;&amp; (
-            &lt;tr&gt;&lt;td colSpan="6" style={{ padding: 12, textAlign: "center", color: "#64748b" }}&gt;Sin movimientos todavía.&lt;/td&gt;&lt;/tr&gt;
-          )}
-        &lt;/tbody&gt;
-      &lt;/table&gt;
+    &lt;div className="card"&gt;
+      &lt;div className="stat"&gt;
+        &lt;div className="title"&gt;{title}&lt;/div&gt;
+        &lt;div className="number"&gt;{amount}&lt;/div&gt;
+      &lt;/div&gt;
+      {trend &amp;&amp; (
+        &lt;div className={positive ? "trend-up" : "trend-down"} style={{marginTop:6}}&gt;
+          {trend}
+        &lt;/div&gt;
+      )}
     &lt;/div&gt;
   );
 }
@@ -148,7 +118,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-24T02:01:31.127Z
+                at 2025-09-24T02:24:24.067Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
