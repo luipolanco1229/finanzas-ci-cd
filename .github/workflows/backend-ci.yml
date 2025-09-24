@@ -39,7 +39,7 @@ jobs:
 
       - name: Run Unit Tests with pytest and Coverage
         run: |
-          pytest # Genera un informe XML para SonarCloud
+          pytest tests/unit # Genera un informe XML para SonarCloud
 
       - name: Upload Test Reports Artifacts
         uses: actions/upload-artifact@v4

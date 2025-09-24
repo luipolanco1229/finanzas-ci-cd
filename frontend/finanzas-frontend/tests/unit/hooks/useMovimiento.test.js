@@ -1,7 +1,7 @@
 import { test, expect, describe, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useMovimientos } from '../../src/hooks/useMovimientos';
-import { movimientosApi } from '../../src/api/movimientosApi';
+import { useMovimientos } from '../../../src/hooks/useMovimientos';
+import { movimientosApi } from '../../../src/api/movimientosApi';
 
 // Mock API
 vi.mock('../../src/api/movimientosApi', () => ({

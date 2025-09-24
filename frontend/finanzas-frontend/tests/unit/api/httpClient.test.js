@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { httpClient } from '../../src/api/httpClient';
-import { CONFIG } from '../../src/app/config';
+import { httpClient } from '../../../src/api/httpClient';
+import { CONFIG } from '../../../src/app/config';
 
 let originalFetch;
 

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import KPIGrid from '../../src/components/KPIGrid';
+import KPIGrid from '../../../src/components/KPIGrid';
 
 test('muestra los kpis con sus valores', () => {
   const kpis = [

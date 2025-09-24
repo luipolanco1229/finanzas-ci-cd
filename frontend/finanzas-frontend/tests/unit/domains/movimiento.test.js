@@ -1,5 +1,5 @@
 import { test, expect, describe } from 'vitest';
-import { validarMovimiento } from '../../src/domain/movimiento';
+import { validarMovimiento } from '../../../src/domain/movimiento';
 
 describe('validarMovimiento', () => {
   test('valida un ingreso correcto', () => {
