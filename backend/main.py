@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Literal, Optional, List
 
-app = FastAPI(title="API Finanzas", version="1.0.0")
+app = FastAPI(title="API Finanzas", version="1.0.0", root_path="/api")
 
 # CORS: habilita peticiones desde Vite (puerto 5173 por defecto)
 app.add_middleware(
