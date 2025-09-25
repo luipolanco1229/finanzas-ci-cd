@@ -1,0 +1,247 @@
+name: CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_image:
+        description: "Imagen Docker del backend (FastAPI)"
+        required: true
+        default: "usuario/finanzas-backend:latest"
+      frontend_image:
+        description: "Imagen Docker del frontend (React + Nginx)"
+        required: true
+        default: "usuario/finanzas-frontend:latest"
+
+jobs:
+  # -------------------------------------
+  # Job de Despliegue CloudFormation Staging
+  # -------------------------------------
+  deploy-cfn-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+    outputs:
+      alb_url_staging: ${{ steps.get_stack_outputs.outputs.alb_url }}
+      cluster_name_staging: "finanzas-staging-cluster"
+      backend_service_staging: "backend-staging-service"
+      frontend_service_staging: "frontend-staging-service"
+
+    steps:
+      - name: Checkout code
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Deploy CloudFormation Staging Stack
+        run: |
+          aws cloudformation deploy \
+            --template-file template.yaml \
+            --stack-name finanzas-staging-stack \
+            --parameter-overrides \
+              EnvironmentName=staging \
+              BackendDockerImageUri=${{ github.event.inputs.backend_image }} \
+              FrontendDockerImageUri=${{ github.event.inputs.frontend_image }} \
+              LabRoleArn=${{ secrets.LAB_ROLE_ARN }} \
+              VpcId=${{ secrets.VPC_ID }} \
+              SubnetIds="${{ secrets.SUBNET_IDS }}" \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changes
+
+      - name: Get Staging Stack Outputs
+        id: get_stack_outputs
+        run: |
+          STACK_OUTPUTS=$(aws cloudformation describe-stacks \
+            --stack-name finanzas-staging-stack \
+            --region us-east-1 --output json)
+
+          ALB_URL=$(echo $STACK_OUTPUTS | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="ALBDnsName") | .OutputValue')
+          echo "alb_url=http://${ALB_URL}/" >> $GITHUB_OUTPUT
+
+  # -------------------------------------
+  # Job de Actualización Servicio Staging (ECS - Forzar despliegue)
+  # -------------------------------------
+  update-service-staging:
+    needs: deploy-cfn-staging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Force New Deployment ECS Services
+        run: |
+          for service in backend-staging-service frontend-staging-service; do
+            echo "Forcing deployment for $service..."
+            aws ecs update-service \
+              --cluster finanzas-staging-cluster \
+              --service $service \
+              --force-new-deployment \
+              --region us-east-1
+          done
+          echo "Waiting for services to stabilize..."
+          aws ecs wait services-stable \
+            --cluster finanzas-staging-cluster \
+            --services backend-staging-service frontend-staging-service \
+            --region us-east-1
+
+  # -------------------------------------
+  # Job de Pruebas de Aceptación en Staging
+  # -------------------------------------
+  test-staging:
+    needs: [deploy-cfn-staging, update-service-staging]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: |
+          pip install -r requirements.txt
+          pytest tests/test_acceptance.py
+        env:
+          APP_BASE_URL: ${{ needs.deploy-cfn-staging.outputs.alb_url_staging }}
+
+  # Pruebas de aceptación del frontend en staging
+  
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # o la versión que uses en tu frontend
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run Frontend Acceptance Tests
+        working-directory: frontend
+        run: npm test
+        env:
+          REACT_APP_API_URL: ${{ needs.deploy-cfn-staging.outputs.alb_url_staging }}
+
+  # -------------------------------------
+  # Job de Despliegue CloudFormation Producción
+  # -------------------------------------
+  deploy-cfn-prod:
+    needs: test-staging
+    runs-on: ubuntu-latest
+    environment: production # 🔹 Aquí GitHub pedirá aprobación manual
+    outputs:
+      alb_url_prod: ${{ steps.get_stack_outputs.outputs.alb_url }}
+      cluster_name_prod: "finanzas-production-cluster"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Deploy CloudFormation Production Stack
+        run: |
+          aws cloudformation deploy \
+            --template-file template.yaml \
+            --stack-name finanzas-prod-stack \
+            --parameter-overrides \
+              EnvironmentName=production \
+              BackendDockerImageUri=${{ github.event.inputs.backend_image }} \
+              FrontendDockerImageUri=${{ github.event.inputs.frontend_image }} \
+              LabRoleArn=${{ secrets.LAB_ROLE_ARN }} \
+              VpcId=${{ secrets.VPC_ID }} \
+              SubnetIds="${{ secrets.SUBNET_IDS }}" \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changes
+
+      - name: Get Production Stack Outputs
+        id: get_stack_outputs
+        run: |
+          STACK_OUTPUTS=$(aws cloudformation describe-stacks \
+            --stack-name finanzas-prod-stack \
+            --region us-east-1 --output json)
+
+          ALB_URL=$(echo $STACK_OUTPUTS | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="ALBDnsName") | .OutputValue')
+          echo "alb_url=http://${ALB_URL}/" >> $GITHUB_OUTPUT
+
+  # -------------------------------------
+  # Job de Actualización Servicio Producción (ECS - Forzar despliegue)
+  # -------------------------------------
+  update-service-prod:
+    needs: deploy-cfn-prod
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: us-east-1
+
+      - name: Force New Deployment ECS Services
+        run: |
+          for service in backend-production-service frontend-production-service; do
+            echo "Forcing deployment for $service..."
+            aws ecs update-service \
+              --cluster finanzas-production-cluster \
+              --service $service \
+              --force-new-deployment \
+              --region us-east-1
+          done
+          aws ecs wait services-stable \
+            --cluster finanzas-production-cluster \
+            --services backend-production-service frontend-production-service \
+            --region us-east-1
+
+  # -------------------------------------
+  # Job de Pruebas de Humo en Producción
+  # -------------------------------------
+  smoke-test-prod:
+    needs: [deploy-cfn-prod, update-service-prod]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: |
+          pip install -r requirements.txt
+          pytest tests/test_smoke.py
+        env:
+          APP_BASE_URL: ${{ needs.deploy-cfn-prod.outputs.alb_url_prod }}
+
+  # Smoke tests del frontend en producción
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run Frontend Smoke Tests
+        working-directory: frontend
+        run: npm run test:smoke # 🔹 asumiendo que defines un script específico en package.json
+        env:
+          REACT_APP_API_URL: ${{ needs.deploy-cfn-prod.outputs.alb_url_prod }}

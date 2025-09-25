@@ -1,0 +1,296 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  CloudFormation template para desplegar la aplicacion Finanzas en ECS Fargate
+  con ALB. Usa la VPC por defecto y el LabRole existente.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Description: "Nombre del entorno (ej: staging, production). Usado para nombrar recursos."
+    AllowedValues: [staging, production]
+  BackendDockerImageUri:
+    Type: String
+    Description: "URI de la imagen Docker del backend FastAPI"
+  FrontendDockerImageUri:
+    Type: String
+    Description: "URI de la imagen Docker del frontend React (nginx)"
+  LabRoleArn:
+    Type: String
+    Description: ARN completo del rol IAM 'LabRole' existente en la cuenta.
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: ID de la VPC por defecto donde desplegar.
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Lista de al menos DOS IDs de subredes PuBLICAS de la VPC por defecto en diferentes AZs.
+
+Resources:
+  # --- Grupo de Logs para ECS ---
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/finanzas-${EnvironmentName}-task'
+      RetentionInDays: 7 # Retener logs por 7 días (ajusta si es necesario)
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # --- Cluster ECS ---
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub 'finanzas-${EnvironmentName}-cluster
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # --- Seguridad ---
+  # Security Group para el Load Balancer (permite HTTP desde internet)
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub 'alb-sg-${EnvironmentName}'
+      GroupDescription: Permite trafico HTTP al ALB
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Security Group para el Servicio ECS (permite trafico desde el ALB en el puerto 8000)
+  ECSServiceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub 'ecs-service-sg-${EnvironmentName}'
+      GroupDescription: Permite trafico desde el ALB al servicio ECS
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # --- Load Balancer ---
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub 'finanzas-${EnvironmentName}-alb'
+      Subnets: !Ref SubnetIds # Debe estar en subredes publicas
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Scheme: internet-facing
+      Type: application
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # Listener HTTP en el puerto 80
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref FrontendTargetGroup
+
+  ALBListenerRuleBackend:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ALBListener
+      Priority: 1
+      Conditions:
+        - Field: path-pattern
+          Values: ["/api/*"]
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref BackendTargetGroup
+
+# Target Group para las tareas ECS
+  BackendTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub 'tg-backend-${EnvironmentName}'
+      VpcId: !Ref VpcId
+      Port: 8000
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckPath: /health
+      HealthCheckPort: '8000'
+      HealthCheckProtocol: HTTP
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      HealthCheckIntervalSeconds: 15
+      HealthCheckTimeoutSeconds: 5
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  FrontendTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub 'tg-frontend-${EnvironmentName}'
+      VpcId: !Ref VpcId
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckPath: /
+      HealthCheckPort: '80'
+      HealthCheckProtocol: HTTP
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
+      HealthCheckIntervalSeconds: 15
+      HealthCheckTimeoutSeconds: 5
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # --- Definicion de Tarea ECS ---
+  BackendTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: ECSLogGroup # Asegura que el Log Group exista primero
+    Properties:
+      Family: !Sub 'backend-${EnvironmentName}'
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: '256' # 0.25 vCPU (minimo Fargate)
+      Memory: '512' # 0.5 GB (minimo Fargate)
+      TaskRoleArn: !Ref LabRoleArn # Rol para permisos DENTRO del contenedor (si necesita llamar a otros servicios AWS)
+      ExecutionRoleArn: !Ref LabRoleArn # Rol para que ECS/Fargate pueda descargar imagen, enviar logs, etc.
+      ContainerDefinitions:
+        - Name: backend
+          Image: !Ref BackendDockerImageUri
+          PortMappings:
+            - ContainerPort: 8000
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              # Usar !Ref para hacer referencia al Log Group creado
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: backend
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+      
+  FrontendTaskDefinition:
+  Type: AWS::ECS::TaskDefinition
+  DependsOn: ECSLogGroup # Asegura que el Log Group exista primero
+  Properties:
+    Family: !Sub 'frontend-${EnvironmentName}'
+    RequiresCompatibilities:
+      - FARGATE
+    NetworkMode: awsvpc
+    Cpu: '256' # 0.25 vCPU (minimo Fargate)
+    Memory: '512' # 0.5 GB (minimo Fargate)
+    TaskRoleArn: !Ref LabRoleArn # Rol para permisos DENTRO del contenedor (si necesita llamar a otros servicios AWS)
+    ExecutionRoleArn: !Ref LabRoleArn # Rol para que ECS/Fargate pueda descargar imagen, enviar logs, etc.
+    ContainerDefinitions:
+      - Name: frontend
+        Image: !Ref FrontendDockerImageUri
+        PortMappings:
+          - ContainerPort: 80
+            Protocol: tcp
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            # Usar !Ref para hacer referencia al Log Group creado
+            awslogs-group: !Ref ECSLogGroup
+            awslogs-region: !Ref AWS::Region
+            awslogs-stream-prefix: frontend
+    Tags:
+      - Key: Environment
+        Value: !Ref EnvironmentName
+
+  # --- Servicios ECS ---
+  BackendService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListenerRuleBackend
+    Properties:
+      ServiceName: !Sub 'backend-${EnvironmentName}-service'
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref BackendTaskDefinition
+      DesiredCount: 1 # Numero inicial de tareas
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED # Necesario en subredes publicas sin NAT Gateway
+          Subnets: !Ref SubnetIds # Las mismas subredes publicas del ALB
+          SecurityGroups:
+            - !Ref ECSServiceSecurityGroup
+      LoadBalancers:
+        - ContainerName: backend
+          ContainerPort: 8000
+          TargetGroupArn: !Ref BackendTargetGroup
+      # DesiredCount y TaskDefinition se actualizan en despliegues posteriores
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 50 # Permite que baje al 50% durante el deploy
+        MaximumPercent: 200 # Permite que suba al 200% temporalmente
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  FrontendService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListener
+    Properties:
+      ServiceName: !Sub 'frontend-${EnvironmentName}-service'
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref FrontendTaskDefinition
+      DesiredCount: 1 # Numero inicial de tareas
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED # Necesario en subredes publicas sin NAT Gateway
+          Subnets: !Ref SubnetIds # Las mismas subredes publicas del ALB
+          SecurityGroups:
+            - !Ref ECSServiceSecurityGroup
+      LoadBalancers:
+        - ContainerName: frontend
+          ContainerPort: 80
+          TargetGroupArn: !Ref FrontendTargetGroup
+      # DesiredCount y TaskDefinition se actualizan en despliegues posteriores
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 50 # Permite que baje al 50% durante el deploy
+        MaximumPercent: 200 # Permite que suba al 200% temporalmente
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName    
+
+Outputs:
+  ALBDnsName:
+    Description: DNS Name of the Application Load Balancer
+    Value: !GetAtt ApplicationLoadBalancer.DNSName
+    Export:
+      Name: !Sub '${AWS::StackName}-ALBDnsName'
+  ECSClusterName:
+    Description: Name of the ECS Cluster
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub '${AWS::StackName}-ECSClusterName'
+  BackendServiceName:
+    Description: Nombre del servicio backend
+    Value: !GetAtt BackendService.Name
+    Export:
+      Name: !Sub '${AWS::StackName}-BackendServiceName'
+  FrontendServiceName:
+    Description: Nombre del servicio frontend
+    Value: !GetAtt FrontendService.Name
+    Export:
+      Name: !Sub '${AWS::StackName}-FrontendServiceName'
