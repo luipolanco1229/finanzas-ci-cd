@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout code
-      - uses: actions/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -115,7 +115,7 @@ jobs:
           APP_BASE_URL: ${{ needs.deploy-cfn-staging.outputs.alb_url_staging }}
 
   # Pruebas de aceptación del frontend en staging
-  
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
