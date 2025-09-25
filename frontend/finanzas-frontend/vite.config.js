@@ -11,5 +11,10 @@ export default defineConfig({
       provider: 'istanbul',
       reporter: ['text', 'lcov'], // text = consola, lcov = para SonarCloud
     },
+  },
+  server: {
+    host: '0.0.0.0',
+    port: 80,
+    allowedHosts: 'all'
   }
 })
