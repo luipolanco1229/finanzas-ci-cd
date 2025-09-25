@@ -108,9 +108,11 @@ jobs:
         with:
           python-version: '3.12'
 
-      - run: |
-          pip install -r backend/requirements.txt
-          pytest backend/tests/test_acceptance.py
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Run Backend Acceptance Tests
+        run: pytest backend/tests/test_acceptance.py
         env:
           APP_BASE_URL: ${{ needs.deploy-cfn-staging.outputs.alb_url_staging }}api
 
@@ -129,7 +131,7 @@ jobs:
         working-directory: frontend/finanzas-frontend
         run: npm test tests/acceptance
         env:
-          REACT_APP_API_URL: ${{ needs.deploy-cfn-staging.outputs.alb_url_staging }}
+          REACT_APP_API_URL: ${{ needs.deploy-cfn-staging.outputs.alb_url_staging }}api
 
   # -------------------------------------
   # Job de Despliegue CloudFormation Producción
@@ -227,7 +229,7 @@ jobs:
           pip install -r backend/requirements.txt
           pytest backend/tests/test_smoke.py
         env:
-          APP_BASE_URL: ${{ needs.deploy-cfn-prod.outputs.alb_url_prod }}
+          APP_BASE_URL: ${{ needs.deploy-cfn-prod.outputs.alb_url_prod }}api
 
   # Smoke tests del frontend en producción
       
@@ -244,4 +246,4 @@ jobs:
         working-directory: frontend/finanzas-frontend
         run: npm test tests/smoke.test.js
         env:
-          REACT_APP_API_URL: ${{ needs.deploy-cfn-prod.outputs.alb_url_prod }}
+          REACT_APP_API_URL: ${{ needs.deploy-cfn-prod.outputs.alb_url_prod }}api
