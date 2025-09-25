@@ -112,7 +112,7 @@ jobs:
           pip install -r backend/requirements.txt
           pytest backend/tests/test_acceptance.py
         env:
-          APP_BASE_URL: ${{ needs.deploy-cfn-staging.outputs.alb_url_staging }}
+          APP_BASE_URL: ${{ needs.deploy-cfn-staging.outputs.alb_url_staging }}api
 
   # Pruebas de aceptación del frontend en staging
 
