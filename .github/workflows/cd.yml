@@ -109,8 +109,8 @@ jobs:
           python-version: '3.12'
 
       - run: |
-          pip install -r requirements.txt
-          pytest tests/test_acceptance.py
+          pip install -r backend/requirements.txt
+          pytest backend/tests/test_acceptance.py
         env:
           APP_BASE_URL: ${{ needs.deploy-cfn-staging.outputs.alb_url_staging }}
 
@@ -122,12 +122,12 @@ jobs:
           node-version: '20' # o la versión que uses en tu frontend
 
       - name: Install frontend dependencies
-        working-directory: frontend
+        working-directory: frontend/finanzas-frontend
         run: npm ci
 
       - name: Run Frontend Acceptance Tests
-        working-directory: frontend
-        run: npm test
+        working-directory: frontend/finanzas-frontend
+        run: npm test tests/acceptance
         env:
           REACT_APP_API_URL: ${{ needs.deploy-cfn-staging.outputs.alb_url_staging }}
 
@@ -224,8 +224,8 @@ jobs:
           python-version: '3.12'
 
       - run: |
-          pip install -r requirements.txt
-          pytest tests/test_smoke.py
+          pip install -r backend/requirements.txt
+          pytest backend/tests/test_smoke.py
         env:
           APP_BASE_URL: ${{ needs.deploy-cfn-prod.outputs.alb_url_prod }}
 
@@ -237,11 +237,11 @@ jobs:
           node-version: '20'
 
       - name: Install frontend dependencies
-        working-directory: frontend
+        working-directory: frontend/finanzas-frontend
         run: npm ci
 
       - name: Run Frontend Smoke Tests
-        working-directory: frontend
-        run: npm run test:smoke # 🔹 asumiendo que defines un script específico en package.json
+        working-directory: frontend/finanzas-frontend
+        run: npm test tests/smoke.test.js
         env:
           REACT_APP_API_URL: ${{ needs.deploy-cfn-prod.outputs.alb_url_prod }}
