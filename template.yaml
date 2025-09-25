@@ -39,7 +39,7 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Sub 'finanzas-${EnvironmentName}-cluster
+      ClusterName: !Sub 'finanzas-${EnvironmentName}-cluster'
       Tags:
         - Key: Environment
           Value: !Ref EnvironmentName
