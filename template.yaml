@@ -190,33 +190,33 @@ Resources:
           Value: !Ref EnvironmentName
       
   FrontendTaskDefinition:
-  Type: AWS::ECS::TaskDefinition
-  DependsOn: ECSLogGroup # Asegura que el Log Group exista primero
-  Properties:
-    Family: !Sub 'frontend-${EnvironmentName}'
-    RequiresCompatibilities:
-      - FARGATE
-    NetworkMode: awsvpc
-    Cpu: '256' # 0.25 vCPU (minimo Fargate)
-    Memory: '512' # 0.5 GB (minimo Fargate)
-    TaskRoleArn: !Ref LabRoleArn # Rol para permisos DENTRO del contenedor (si necesita llamar a otros servicios AWS)
-    ExecutionRoleArn: !Ref LabRoleArn # Rol para que ECS/Fargate pueda descargar imagen, enviar logs, etc.
-    ContainerDefinitions:
-      - Name: frontend
-        Image: !Ref FrontendDockerImageUri
-        PortMappings:
-          - ContainerPort: 80
-            Protocol: tcp
-        LogConfiguration:
-          LogDriver: awslogs
-          Options:
-            # Usar !Ref para hacer referencia al Log Group creado
-            awslogs-group: !Ref ECSLogGroup
-            awslogs-region: !Ref AWS::Region
-            awslogs-stream-prefix: frontend
-    Tags:
-      - Key: Environment
-        Value: !Ref EnvironmentName
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: ECSLogGroup # Asegura que el Log Group exista primero
+    Properties:
+      Family: !Sub 'frontend-${EnvironmentName}'
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: '256' # 0.25 vCPU (minimo Fargate)
+      Memory: '512' # 0.5 GB (minimo Fargate)
+      TaskRoleArn: !Ref LabRoleArn # Rol para permisos DENTRO del contenedor (si necesita llamar a otros servicios AWS)
+      ExecutionRoleArn: !Ref LabRoleArn # Rol para que ECS/Fargate pueda descargar imagen, enviar logs, etc.
+      ContainerDefinitions:
+        - Name: frontend
+          Image: !Ref FrontendDockerImageUri
+          PortMappings:
+            - ContainerPort: 80
+              Protocol: tcp
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              # Usar !Ref para hacer referencia al Log Group creado
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: frontend
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   # --- Servicios ECS ---
   BackendService:
